@@ -1,33 +1,45 @@
 import './App.css';
 
-import {
-  type MutableRefObject,
-  type RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // q: console.log(배열); 배열 수정; 을 실행하면 수정된 후의 배열이 log에 찍힘.
 // 이는 참조형 자료의 특성인가? 브라우저로 인한 약간의 delay 속에 배열 수정이 먼저 일어나게 되고, 해당 주소만을 불러오는 브라우저는 수정된 이후의 값을 print하는 거?
 
 function App() {
+  let [a1, b1, a2, b2] = [0, 0, 0, 0];
+  while (a1 === a2 && b1 === b2) {
+    [a1, b1, a2, b2] = [
+      Math.floor(Math.random() * 3 + 1),
+      Math.floor(Math.random() * 3 + 1),
+      Math.floor(Math.random() * 3 + 1),
+      Math.floor(Math.random() * 3 + 1),
+    ];
+  }
   const [blockList, setBlockList] = useState<
-    { r: number; c: number; v: number; ref; deltaRow: number }[]
+    {
+      r: number;
+      c: number;
+      v: number;
+      ref;
+      deltaRow: number;
+      merged: boolean;
+    }[]
   >([
     {
-      r: Math.floor(Math.random() * 4),
-      c: Math.floor(Math.random() * 4),
+      r: a1,
+      c: b1,
       v: 1,
       ref: useRef(null),
       deltaRow: 0,
+      merged: false,
     },
     {
-      r: Math.floor(Math.random() * 4),
-      c: Math.floor(Math.random() * 4),
+      r: a2,
+      c: b2,
       v: 1,
       ref: useRef(null),
       deltaRow: 0,
+      merged: false,
     },
   ]);
 
@@ -44,304 +56,269 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
-      const key = e.key;
-      if (key === 'ArrowUp') {
-        let colList: number[] = [];
-        let copy = blockList.map((block) => {
-          colList.push(block.c);
-          return {
-            ...block,
-            ref: block.ref,
-          };
-        });
-        copy = copy.sort((a, b) => a.r - b.r);
-        colList = [...new Set(colList)];
+      let isMoved1 = false;
+      let isMoved2 = false;
+      let colList: number[] = [];
+      let rowList: number[] = [];
+      let maxV = 1;
+      const used: number[][] = [];
 
+      let copy = blockList.map((block) => {
+        colList.push(block.c);
+        rowList.push(block.r);
+        return {
+          ...block,
+          ref: block.ref,
+        };
+      });
+
+      // block 이 존재하는 column, row list
+      colList = [...new Set(colList)];
+      rowList = [...new Set(rowList)];
+
+      if (e.key === 'ArrowUp') {
+        // row 기준 ➡️ col 기준 오름차순 정렬
+        copy = copy.sort((a, b) => a.r - b.r);
+        copy = copy.sort((a, b) => a.c - b.c);
+
+        // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
           let done1: boolean = false;
           let done2: boolean = false;
 
           while (!done1 || !done2) {
+            done1 = true;
             done2 = true;
             let settingRow: number = 0;
-            const values: number[] = [];
-            copy.forEach((obj) => {
+
+            copy.forEach((obj, i) => {
+              // 모든 block 순회
+
               if (obj.c === col) {
+                // 특정 column의 block 선택
+
                 obj.deltaRow += obj.r - settingRow;
-                if (obj.r - settingRow === 0) {
-                  done1 = true;
+                if (obj.r - settingRow !== 0) {
+                  // 움직이는 block이 존재할 때
+                  done1 = false;
+                  isMoved1 = true;
                 }
                 obj.r = settingRow;
                 settingRow += 1;
-                values.push(obj.v);
-              }
-            });
-            values.forEach((v, i) => {
-              if (values[i + 1] !== undefined && values[i + 1] === v) {
-                copy.forEach((obj) => {
-                  if (obj.r === i) {
-                    obj.v += 1;
-                  } else if (obj.r === i + 1) {
-                    obj.v = 0;
-                  }
-                });
-                done2 = false;
+
+                if (
+                  copy[i + 1] !== undefined &&
+                  copy[i + 1].c === col &&
+                  copy[i + 1].v === obj.v &&
+                  !copy[i + 1]?.merged
+                ) {
+                  obj.v += 1;
+                  copy[i + 1].v = 0;
+                  obj.merged = true;
+                  obj.deltaRow = 0;
+                  done2 = false;
+                  isMoved2 = true;
+                }
               }
             });
           }
         });
-        copy = copy.map((dat) => {
-          if (dat.v !== 0) {
-            return dat;
+      } else if (e.key === 'ArrowDown') {
+        // row 기준 ➡️ col 기준 오름차순 정렬
+        copy = copy.sort((a, b) => b.r - a.r);
+        copy = copy.sort((a, b) => a.c - b.c);
+
+        // block 이 존재하는 column에 대해서만 실행
+        colList.forEach((col) => {
+          let done1: boolean = false;
+          let done2: boolean = false;
+
+          while (!done1 || !done2) {
+            done1 = true;
+            done2 = true;
+            let settingRow: number = 3;
+
+            copy.forEach((obj, i) => {
+              // 모든 block 순회
+
+              if (obj.c === col) {
+                // 특정 column의 block 선택
+
+                obj.deltaRow += settingRow - obj.r;
+                if (settingRow - obj.r !== 0) {
+                  // 움직이는 block이 존재할 때
+                  done1 = false;
+                  isMoved1 = true;
+                }
+                obj.r = settingRow;
+                settingRow -= 1;
+
+                if (
+                  copy[i + 1] !== undefined &&
+                  copy[i + 1].c === col &&
+                  copy[i + 1].v === obj.v &&
+                  !copy[i + 1]?.merged
+                ) {
+                  obj.v += 1;
+                  copy[i + 1].v = 0;
+                  obj.merged = true;
+                  obj.deltaRow = 0;
+                  done2 = false;
+                  isMoved2 = true;
+                }
+              }
+            });
           }
+        });
+      } else if (e.key === 'ArrowRight') {
+        // col 기준 ➡️ row 기준 오름차순 정렬
+        copy = copy.sort((a, b) => b.c - a.c);
+        copy = copy.sort((a, b) => a.r - b.r);
+
+        // block 이 존재하는 row에 대해서만 실행
+        rowList.forEach((row) => {
+          let done1: boolean = false;
+          let done2: boolean = false;
+
+          while (!done1 || !done2) {
+            done1 = true;
+            done2 = true;
+            let settingCol: number = 3;
+
+            copy.forEach((obj, i) => {
+              // 모든 block 순회
+
+              if (obj.r === row) {
+                // 특정 row의 block 선택
+
+                obj.deltaRow += settingCol - obj.c;
+                if (settingCol - obj.c !== 0) {
+                  // 움직이는 block이 존재할 때
+                  done1 = false;
+                  isMoved1 = true;
+                }
+                obj.c = settingCol;
+                settingCol -= 1;
+
+                if (
+                  copy[i + 1] !== undefined &&
+                  copy[i + 1].r === row &&
+                  copy[i + 1].v === obj.v &&
+                  !copy[i + 1]?.merged
+                ) {
+                  obj.v += 1;
+                  copy[i + 1].v = 0;
+                  obj.merged = true;
+                  obj.deltaRow = 0;
+                  done2 = false;
+                  isMoved2 = true;
+                }
+              }
+            });
+          }
+        });
+      } else if (e.key === 'ArrowLeft') {
+        // col 기준 ➡️ row 기준 오름차순 정렬
+        copy = copy.sort((a, b) => a.c - b.c);
+        copy = copy.sort((a, b) => a.r - b.r);
+
+        // block 이 존재하는 row에 대해서만 실행
+        rowList.forEach((row) => {
+          let done1: boolean = false;
+          let done2: boolean = false;
+
+          while (!done1 || !done2) {
+            done1 = true;
+            done2 = true;
+            let settingCol: number = 0;
+
+            copy.forEach((obj, i) => {
+              // 모든 block 순회
+
+              if (obj.r === row) {
+                // 특정 row의 block 선택
+
+                obj.deltaRow += obj.c - settingCol;
+                if (obj.c - settingCol !== 0) {
+                  // 움직이는 block이 존재할 때
+                  done1 = false;
+                  isMoved1 = true;
+                }
+                obj.c = settingCol;
+                settingCol += 1;
+
+                if (
+                  copy[i + 1] !== undefined &&
+                  copy[i + 1].r === row &&
+                  copy[i + 1].v === obj.v &&
+                  !copy[i + 1]?.merged
+                ) {
+                  obj.v += 1;
+                  copy[i + 1].v = 0;
+                  obj.merged = true;
+                  obj.deltaRow = 0;
+                  done2 = false;
+                  isMoved2 = true;
+                }
+              }
+            });
+          }
+        });
+      }
+
+      copy = copy.filter((dat) => {
+        if (dat.v !== 0) {
+          return dat;
+        }
+      });
+
+      copy.forEach((obj) => {
+        obj.merged = false;
+        used.push([obj.r, obj.c]);
+        maxV = Math.max(maxV, obj.v);
+      });
+
+      if (isMoved1 || isMoved2) {
+        let [r, c] = [
+          Math.floor(Math.random() * 4),
+          Math.floor(Math.random() * 4),
+        ];
+        let isUsed = false;
+        used.forEach((arr) => {
+          if (JSON.stringify(arr) === JSON.stringify([r, c])) {
+            isUsed = true;
+          }
+        });
+        while (isUsed) {
+          [r, c] = [
+            Math.floor(Math.random() * 4),
+            Math.floor(Math.random() * 4),
+          ];
+          isUsed = false;
+          used.forEach((arr) => {
+            if (JSON.stringify(arr) === JSON.stringify([r, c])) {
+              isUsed = true;
+            }
+          });
+        }
+        copy.push({
+          r: r,
+          c: c,
+          v: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
+          ref: null,
+          deltaRow: 0,
+          merged: false,
         });
         setBlockList(copy);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [blockList]);
-
-  // // const [board, setBoard] = useState<number[][]>([
-  // //   [0, 0, 1, 0],
-  // //   [0, 0, 0, 0],
-  // //   [0, 0, 0, 0],
-  // //   [0, 0, 2, 0],
-  // // ]);
-  // // const boardCol: [][] = [[], [], [], []];
-  // // boardCol.forEach((col, i) => {
-  // //   col.push(board.map((row): number => row[i]));
-  // // });
-
-  // // useEffect(() => {
-  // //   const handleKeyDown = (e: KeyboardEvent): void => {
-  // //     const key = e.key;
-  // //     if (key === 'ArrowUp') {
-  // //       // up arrow
-
-  // //       const copy = board.map((row) => [...row]); // 2차원 배열의 깊은 복사
-  // //       const colArray = [[], [], [], []];
-  // //       colArray = copy.map((row) => {
-  // //         // 각 column을 따로 보기로 함.
-
-  // //         const colArray: Array<number> = [3, 2, 1, 0].map((r) => {
-  // //           // 해당 column에 대한 세로 모양 배열의 선언
-
-  // //           const row = copy[r];
-
-  // //           // 이하 구문은 row, row[col]이 undefined일 가능성이 있다는 typescript를 달래려는 노력
-  // //           if (row !== undefined && row[col] !== undefined) {
-  // //             return row[col];
-  // //           } else {
-  // //             return 0;
-  // //           }
-  // //         });
-
-  // //         let done = false;
-  // //         while (!done) {
-  // //           // 근접한 두 값을 비교하여 이동 혹은 더할 것인데, 이러한 연산이 모두 완료될 때까지 반복한다.
-
-  // //           done = true;
-
-  // //           [3, 2, 1].forEach((i) => {
-  // //             // colArray를 역으로 순회하며 두 값씩 비교하여 계산
-  // //             let blockNow = colArray[i];
-  // //             const blockComp = colArray[i - 1];
-  // //             if (blockComp !== undefined && blockNow !== undefined) {
-  // //               if (blockNow < blockComp && blockNow === 0) {
-  // //                 // 빈 칸을 건너뛰어 위로 올리기
-
-  // //                 [colArray[i], colArray[i - 1]] = [blockComp, blockNow];
-  // //                 done = false;
-  // //               } else if (blockNow === blockComp && blockNow !== 0) {
-  // //                 // 같은 수는 더하기
-
-  // //                 blockNow += 1;
-  // //                 colArray[i] = blockNow;
-  // //                 colArray[i - 1] = 0;
-  // //               }
-  // //             }
-  // //           });
-  // //         }
-
-  // //         [0, 1, 2, 3].forEach((i) => {
-  // //           // colArray는 이 반복문 속의 column에 대해서만 정의된 것이므로, 반복문 안에서 복사본을 수정해야 한다.
-
-  // //           if (copy[i] !== undefined) {
-  // //             const block = colArray[3 - i];
-  // //             if (block !== undefined) {
-  // //               copy[i][col] = block;
-  // //             }
-  // //           }
-  // //         });
-  // //         // col array를 실제 state에 반영해야 함.
-  // //       });
-  // //       let [i, j] = [
-  // //         Math.floor(Math.random() * 4),
-  // //         Math.floor(Math.random() * 4),
-  // //       ];
-
-  // //       // undefined type error 해결 구문
-
-  // //       if (Array.isArray(copy[i])) {
-  // //         while (copy[i][j] !== 0) {
-  // //           [i, j] = [
-  // //             Math.floor(Math.random() * 4),
-  // //             Math.floor(Math.random() * 4),
-  // //           ];
-  // //         }
-
-  // //         copy[i][j] = 1;
-  // //       }
-  // //       setBoard(copy);
-  // //     } else if (key === 'ArrowDown') {
-  // //       // down arrow
-  // //       const copy = board.map((row) => [...row]); // 2차원 배열의 깊은 복사
-
-  // //       [0, 1, 2, 3].forEach((col) => {
-  // //         // 각 column을 따로 보기로 함.
-
-  // //         const colArray: Array<number> = [3, 2, 1, 0].map((r) => {
-  // //           // 해당 column에 대한 세로 모양 배열의 선언
-
-  // //           const row = copy[r];
-
-  // //           // 이하 구문은 row, row[col]이 undefined일 가능성이 있다는 typescript를 달래려는 노력
-  // //           if (row !== undefined && row[col] !== undefined) {
-  // //             return row[col];
-  // //           } else {
-  // //             return 0;
-  // //           }
-  // //         });
-
-  // //         let done = false;
-  // //         while (!done) {
-  // //           // 근접한 두 값을 비교하여 이동 혹은 더할 것인데, 이러한 연산이 모두 완료될 때까지 반복한다.
-
-  // //           done = true;
-
-  // //           [0, 1, 2].forEach((i) => {
-  // //             // colArray를 역으로 순회하며 두 값씩 비교하여 계산
-  // //             let blockNow = colArray[i];
-  // //             const blockComp = colArray[i + 1];
-  // //             if (blockComp !== undefined && blockNow !== undefined) {
-  // //               if (blockNow < blockComp && blockNow === 0) {
-  // //                 // 빈 칸을 건너뛰어 위로 올리기
-
-  // //                 [colArray[i], colArray[i + 1]] = [blockComp, blockNow];
-  // //                 done = false;
-  // //               } else if (blockNow === blockComp && blockNow !== 0) {
-  // //                 // 같은 수는 더하기
-
-  // //                 blockNow += 1;
-  // //                 colArray[i] = blockNow;
-  // //                 colArray[i + 1] = 0;
-  // //               }
-  // //             }
-  // //           });
-  // //         }
-
-  // //         [0, 1, 2, 3].forEach((i) => {
-  // //           // colArray는 이 반복문 속의 column에 대해서만 정의된 것이므로, 반복문 안에서 복사본을 수정해야 한다.
-
-  // //           if (copy[i] !== undefined) {
-  // //             const block = colArray[3 - i];
-  // //             if (block !== undefined) {
-  // //               copy[i][col] = block;
-  // //             }
-  // //           }
-  // //         });
-  // //         // col array를 실제 state에 반영해야 함.
-  // //       });
-  // //       let [i, j] = [
-  // //         Math.floor(Math.random() * 4),
-  // //         Math.floor(Math.random() * 4),
-  // //       ];
-
-  // //       // undefined type error 해결 구문
-
-  // //       if (Array.isArray(copy[i])) {
-  // //         while (copy[i][j] !== 0) {
-  // //           [i, j] = [
-  // //             Math.floor(Math.random() * 4),
-  // //             Math.floor(Math.random() * 4),
-  // //           ];
-  // //         }
-
-  // //         copy[i][j] = 1;
-  // //       }
-  // //       setBoard(copy);
-  // //     } else if (key === 'ArrowRight') {
-  // //       // right arrow
-  // //       let copy = Array.from(
-  // //         { length: 4 },
-  // //         () => Array(4).fill(0) as number[],
-  // //       );
-  // //       // rows와 cols에 맞게 배열을 초기화 (예를 들어 4x4 배열이라면 Array(4).fill(0)과 같은 방식으로 초기화)
-
-  // //       copy = board.map((row) => [...row]); // 2차원 배열의 깊은 복사
-
-  // //       [0, 1, 2, 3].forEach((row) => {
-  // //         // 각 column을 따로 보기로 함.
-
-  // //         let done = false;
-  // //         while (!done) {
-  // //           // 근접한 두 값을 비교하여 이동 혹은 더할 것인데, 이러한 연산이 모두 완료될 때까지 반복한다.
-
-  // //           done = true;
-
-  // //           [3, 2, 1].forEach((i) => {
-  // //             // colArray를 역으로 순회하며 두 값씩 비교하여 계산
-  // //             let blockNow = copy[row][i];
-  // //             const blockComp = copy[row][i - 1];
-  // //             if (blockComp !== undefined && blockNow !== undefined) {
-  // //               if (blockNow < blockComp && blockNow === 0) {
-  // //                 // 빈 칸을 건너뛰어 위로 올리기
-
-  // //                 [copy[row][i], copy[row][i - 1]] = [blockComp, blockNow];
-  // //                 done = false;
-  // //               } else if (blockNow === blockComp && blockNow !== 0) {
-  // //                 // 같은 수는 더하기
-
-  // //                 blockNow += 1;
-  // //                 copy[row][i] = blockNow;
-  // //                 copy[row][i - 1] = 0;
-  // //               }
-  // //             }
-  // //           });
-  // //         }
-  // //         // col array를 실제 state에 반영해야 함.
-  // //       });
-  // //       let [i, j] = [
-  // //         Math.floor(Math.random() * 4),
-  // //         Math.floor(Math.random() * 4),
-  // //       ];
-
-  // //       // undefined type error 해결 구문
-
-  // //       if (Array.isArray(copy[i])) {
-  // //         while (copy[i][j] !== 0) {
-  // //           [i, j] = [
-  // //             Math.floor(Math.random() * 4),
-  // //             Math.floor(Math.random() * 4),
-  // //           ];
-  // //         }
-
-  // //         copy[i][j] = 1;
-  // //       }
-  // //       setBoard(copy);
-  // //     } else if (key === 'ArrowLeft') {
-  // //       // left arrow
-  // //     }
-  // //   };
-  // //   window.addEventListener('keydown', handleKeyDown);
-  // //   return () => {
-  // //     window.removeEventListener('keydown', handleKeyDown);
-  // //   };
-  // // }, [board]);
 
   return (
     <div className="flex justify-center h-screen w-screen bg-zinc-100">
@@ -383,7 +360,6 @@ function App() {
                 className="col-span-1 relative bg-zinc-200 rounded-xl shadow-lg"
                 key={index}
               >
-                {index}
                 {blockList.map((obj, j) => {
                   if (obj.r === Math.floor(index / 4) && obj.c === index % 4) {
                     let colorString = '';
@@ -394,15 +370,14 @@ function App() {
                     });
                     return (
                       <div
-                        className={`absolute inset-0 rounded-xl ${colorString} cursor-default animate-fadeIn`}
+                        className={`absolute w-[125px] h-[125px] rounded-xl ${colorString} cursor-default z-40`}
                         key={j}
+                        ref={obj.ref}
                       >
                         <div className="flex items-center w-full h-full">
                           <p className="w-full text-center text-6xl text-white font-black">
                             {2 ** obj.v}
                           </p>
-                          {Math.floor(index / 4)},{index % 4}, {obj.r}, {obj.c},{' '}
-                          {JSON.stringify(obj)}
                         </div>
                       </div>
                     );

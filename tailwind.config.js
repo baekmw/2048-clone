@@ -12,6 +12,10 @@ export default {
           '0%': { opacity: '1' },
           '100%': { opacity: '0' },
         },
+        slideRight: {
+          from: { left: '0px' },
+          to: { left: '10px' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.5s ease-in-out forwards',
