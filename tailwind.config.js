@@ -16,10 +16,16 @@ export default {
           from: { left: '0px' },
           to: { left: '10px' },
         },
+        grow: {
+          '0%': { transform: 'scale(0)', opacity: '0' },
+          '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.5s ease-in-out forwards',
         fadeOut: 'fadeOut 0.5s ease-in-out forwards',
+        grow: 'grow 0.5s ease-in-out',
       },
     },
   },

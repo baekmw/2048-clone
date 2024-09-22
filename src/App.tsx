@@ -1,11 +1,14 @@
 import './App.css';
 
-import { type MutableRefObject, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // q: console.log(배열); 배열 수정; 을 실행하면 수정된 후의 배열이 log에 찍힘.
 // 이는 참조형 자료의 특성인가? 브라우저로 인한 약간의 delay 속에 배열 수정이 먼저 일어나게 되고, 해당 주소만을 불러오는 브라우저는 수정된 이후의 값을 print하는 거?
 
 function App() {
+  const [score, setScore] = useState<number>(0);
+  const highScore = useRef<number>(0);
+  highScore.current = Math.max(highScore.current, score);
   return (
     <div className="flex justify-center h-screen w-screen bg-zinc-100">
       <div className="flex flex-col justify-center w-[35rem] h-full gap-6">
@@ -14,12 +17,16 @@ function App() {
             <p className="mb-8 font-black text-7xl text-blue-500">128</p>
             <div className="flex h-full w-fit gap-3">
               <div className="flex flex-col justify-center items-center h-16 w-[5rem] bg-blue-400/95 rounded-xl shadow-xl font-bold">
-                <p className="text-md text-white/70">score1</p>
-                <p className="text-xl text-white">13</p>
+                <p className="text-md text-white/70">SCORE</p>
+                <p className="text-xl text-white animate-[ping_0.5s]">
+                  {score}
+                </p>
               </div>
               <div className="flex flex-col justify-center items-center h-16 w-[5rem] bg-blue-400/95 rounded-xl shadow-xl font-bold">
-                <p className="text-md text-white/70">score2</p>
-                <p className="text-xl text-white">15</p>
+                <p className="text-md text-white/70">BEST</p>
+                <p className="text-xl text-white animate-[ping_0.5s]">
+                  {highScore.current}
+                </p>
               </div>
             </div>
           </div>
@@ -39,7 +46,7 @@ function App() {
             </div>
           </div>
         </div>
-        <Board></Board>
+        <Board setScore={setScore} score={score}></Board>
       </div>
     </div>
   );
@@ -47,7 +54,13 @@ function App() {
 
 export default App;
 
-function Board() {
+function Board({
+  setScore,
+  score,
+}: {
+  score: number;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const blockID = useRef<number>(2);
   let [a1, b1, a2, b2] = [0, 0, 0, 0];
   while (a1 === a2 && b1 === b2) {
@@ -96,34 +109,40 @@ function Board() {
     'bg-blue-800',
     'bg-blue-900',
   ];
-  // const [translateX, setTranslateX] = useState([
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  // ]);
-  // const [translateY, setTranslateY] = useState([
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  //   [0, 0, 0, 0],
-  // ]);
   let z;
+  let unused: number[][] = [];
+  const used: number[][] = [];
+  Array.from({ length: 16 }, (_, i) => i).map((_, index) => {
+    unused.push([Math.floor(index / 4), index % 4]);
+  });
+  unused = unused.filter((dat) => {
+    let usedee = false;
+    blockList.forEach((block) => {
+      if (JSON.stringify(dat) === JSON.stringify([block.r, block.c])) {
+        usedee = true;
+      }
+    });
+    if (!usedee) {
+      return dat;
+    }
+  });
   useEffect(() => {
     let isMoved1 = false;
     let isMoved2 = false;
     let colList: number[] = [];
     let rowList: number[] = [];
     let maxV = 1;
-    const used: number[][] = [];
+    let add = 0;
 
     let copy = blockList.map((block) => {
+      block.merged = false;
       colList.push(block.c);
       rowList.push(block.r);
       return {
         ...block,
       };
     });
+
     copy = copy.filter((dat) => {
       if (!dat.toZero) {
         return dat;
@@ -133,14 +152,6 @@ function Board() {
     // block 이 존재하는 column, row list
     colList = [...new Set(colList)];
     rowList = [...new Set(rowList)];
-    // const newX = [...translateX];
-    // const newY = [...translateY];
-    // newX[a1][b1] = translateX[a1][b1] = 12 * (b1 + 1) + 125 * b1;
-    // newX[a2][b2] = translateX[a2][b2] = 12 * (b2 + 1) + 125 * b2;
-    // setTranslateX(newX);
-    // newY[a1][b1] = translateY[a1][b1] = 12 * (b1 + 1) + 125 * b1;
-    // newY[a2][b2] = translateY[a2][b2] = 12 * (b2 + 1) + 125 * b2;
-    // setTranslateY(newY);
 
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'ArrowUp') {
@@ -171,19 +182,18 @@ function Board() {
                 }
                 obj.r = settingRow;
                 settingRow += 1;
+                const next = copy[i + 1];
 
-                if (
-                  copy[i + 1] !== undefined &&
-                  copy[i + 1].c === col &&
-                  copy[i + 1].v === obj.v &&
-                  !copy[i + 1]?.merged
-                ) {
-                  obj.v += 1;
-                  copy[i + 1].r = obj.r;
-                  copy[i + 1].toZero = true;
-                  obj.merged = true;
-                  done2 = false;
-                  isMoved2 = true;
+                if (next !== undefined) {
+                  if (next.c === col && next.v === obj.v && !next.merged) {
+                    obj.v += 1;
+                    add += 2 ** obj.v;
+                    next.r = obj.r;
+                    next.toZero = true;
+                    obj.merged = true;
+                    done2 = false;
+                    isMoved2 = true;
+                  }
                 }
               }
             });
@@ -217,19 +227,18 @@ function Board() {
                 }
                 obj.r = settingRow;
                 settingRow -= 1;
+                const next = copy[i + 1];
+                if (next !== undefined) {
+                  if (next.c === col && next.v === obj.v && !next.merged) {
+                    obj.v += 1;
+                    add += 2 ** obj.v;
 
-                if (
-                  copy[i + 1] !== undefined &&
-                  copy[i + 1].c === col &&
-                  copy[i + 1].v === obj.v &&
-                  !copy[i + 1]?.merged
-                ) {
-                  obj.v += 1;
-                  copy[i + 1].r = obj.r;
-                  copy[i + 1].toZero = true;
-                  obj.merged = true;
-                  done2 = false;
-                  isMoved2 = true;
+                    next.r = obj.r;
+                    next.toZero = true;
+                    obj.merged = true;
+                    done2 = false;
+                    isMoved2 = true;
+                  }
                 }
               }
             });
@@ -263,19 +272,17 @@ function Board() {
                 }
                 obj.c = settingCol;
                 settingCol -= 1;
-
-                if (
-                  copy[i + 1] !== undefined &&
-                  copy[i + 1].r === row &&
-                  copy[i + 1].v === obj.v &&
-                  !copy[i + 1]?.merged
-                ) {
-                  obj.v += 1;
-                  copy[i + 1].c = obj.c;
-                  copy[i + 1].toZero = true;
-                  obj.merged = true;
-                  done2 = false;
-                  isMoved2 = true;
+                const next = copy[i + 1];
+                if (next !== undefined) {
+                  if (next.r === row && next.v === obj.v && !next.merged) {
+                    add += 2 ** obj.v;
+                    obj.v += 1;
+                    next.c = obj.c;
+                    next.toZero = true;
+                    obj.merged = true;
+                    done2 = false;
+                    isMoved2 = true;
+                  }
                 }
               }
             });
@@ -309,19 +316,18 @@ function Board() {
                 }
                 obj.c = settingCol;
                 settingCol += 1;
+                const next = copy[i + 1];
+                if (next !== undefined) {
+                  if (next.r === row && next.v === obj.v && !next.merged) {
+                    obj.v += 1;
+                    add += 2 ** obj.v;
 
-                if (
-                  copy[i + 1] !== undefined &&
-                  copy[i + 1].r === row &&
-                  copy[i + 1].v === obj.v &&
-                  !copy[i + 1]?.merged
-                ) {
-                  obj.v += 1;
-                  copy[i + 1].c = obj.c;
-                  copy[i + 1].toZero = true;
-                  obj.merged = true;
-                  done2 = false;
-                  isMoved2 = true;
+                    next.c = obj.c;
+                    next.toZero = true;
+                    obj.merged = true;
+                    done2 = false;
+                    isMoved2 = true;
+                  }
                 }
               }
             });
@@ -330,14 +336,7 @@ function Board() {
       }
 
       copy.forEach((obj) => {
-        obj.merged = false;
         used.push([obj.r, obj.c]);
-        // newX[obj.r][obj.c] = translateX[obj.r][obj.c] =
-        //   12 * (obj.c + 1) + 125 * obj.c;
-        // setTranslateX(newX);
-        // newY[obj.r][obj.c] = translateY[obj.r][obj.c] =
-        //   12 * (obj.r + 1) + 125 * obj.r;
-        // setTranslateY(newY);
         maxV = Math.max(maxV, obj.v - 1);
       });
 
@@ -375,6 +374,7 @@ function Board() {
         });
         blockID.current += 1;
         setBlockList(copy);
+        setScore(score + add);
       }
     };
 
@@ -384,7 +384,6 @@ function Board() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [blockList]);
-
   return (
     <div className="grid relative grid-cols-4 grid-rows-4 w-[35rem] h-[35rem] p-3 gap-3 rounded-2xl bg-zinc-300 shadow-xl ">
       {Array.from({ length: 16 }, (_, i) => i).map((_, index) => {
@@ -396,13 +395,18 @@ function Board() {
             {blockList.map((obj) => {
               z = Number(obj.ID) + 2;
               let delay = '';
+              let merge = '';
 
               if (obj.toZero) {
                 z = 1;
               }
-              if (obj.ID === blockID.current) {
-                delay = 'animate-fadeIn';
+              if (obj.ID === blockID.current - 1) {
+                delay = 'animate-[fadeIn_1s_forwards]';
               }
+              if (obj.merged) {
+                merge = '';
+              }
+
               let colorString = '';
               color.forEach((cl, i) => {
                 if (i === obj.v) {
@@ -411,7 +415,7 @@ function Board() {
               });
               return (
                 <div
-                  className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out ${delay}`}
+                  className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center ${delay} ${merge}`}
                   style={{
                     transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
                     zIndex: z,

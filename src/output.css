@@ -566,36 +566,12 @@ video {
   inset: 0px;
 }
 
-.top-0 {
-  top: 0px;
-}
-
 .left-0 {
   left: 0px;
 }
 
-.z-40 {
-  z-index: 40;
-}
-
-.z-20 {
-  z-index: 20;
-}
-
-.-z-20 {
-  z-index: -20;
-}
-
-.-z-30 {
-  z-index: -30;
-}
-
-.-z-50 {
-  z-index: -50;
-}
-
-.-z-40 {
-  z-index: -40;
+.top-0 {
+  top: 0px;
 }
 
 .col-span-1 {
@@ -626,6 +602,10 @@ video {
   height: 4rem;
 }
 
+.h-\[125px\] {
+  height: 125px;
+}
+
 .h-\[35rem\] {
   height: 35rem;
 }
@@ -643,12 +623,8 @@ video {
   height: 100vh;
 }
 
-.h-\[10rem\] {
-  height: 10rem;
-}
-
-.h-\[125px\] {
-  height: 125px;
+.w-\[125px\] {
+  width: 125px;
 }
 
 .w-\[35rem\] {
@@ -676,76 +652,44 @@ video {
   width: 100vw;
 }
 
-.w-\[10rem\] {
-  width: 10rem;
-}
-
-.w-\[125px\] {
-  width: 125px;
+.origin-center {
+  transform-origin: center;
 }
 
 .transform {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.animate-\[wiggle_1s_ease-in-out_infinite\] {
-  animation: wiggle 1s ease-in-out infinite;
-}
-
-@keyframes slideRight {
-  from {
-    left: 0px;
-  }
-
-  to {
-    left: 10px;
-  }
-}
-
-.animate-\[slideRight_0\.5s_forwards\] {
-  animation: slideRight 0.5s forwards;
-}
-
-@keyframes slideRight {
-  from {
-    left: 0px;
-  }
-
-  to {
-    left: 10px;
-  }
-}
-
-.animate-\[slideRight_1s_forwards\] {
-  animation: slideRight 1s forwards;
-}
-
-@keyframes slideRight {
-  from {
-    left: 0px;
-  }
-
-  to {
-    left: 10px;
-  }
-}
-
-.animate-\[slideRight_1s_infinite\] {
-  animation: slideRight 1s infinite;
-}
-
-@keyframes fadeOut {
-  0% {
-    opacity: 1;
-  }
-
-  100% {
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
     opacity: 0;
   }
 }
 
-.animate-fadeOut {
-  animation: fadeOut 0.5s ease-in-out forwards;
+.animate-\[ping_0\.5s_once\] {
+  animation: ping 0.5s once;
+}
+
+@keyframes grow {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-grow {
+  animation: grow 0.5s ease-in-out;
 }
 
 @keyframes fadeIn {
@@ -776,18 +720,31 @@ video {
   animation: fadeIn 1s forwards;
 }
 
-@keyframes fadeIn {
-  0% {
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
     opacity: 0;
-  }
-
-  100% {
-    opacity: 1;
   }
 }
 
-.animate-\[fadeIn_0\.5s_forwards\] {
-  animation: fadeIn 0.5s forwards;
+.animate-\[ping_0\.5s\] {
+  animation: ping 0.5s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8,0,1,1);
+  }
+
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0,0,0.2,1);
+  }
+}
+
+.animate-\[bounce_0\.5s\] {
+  animation: bounce 0.5s;
 }
 
 .cursor-default {
@@ -981,50 +938,26 @@ video {
   transition-duration: 150ms;
 }
 
-.transition {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
 .transition-transform {
   transition-property: transform;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-.delay-150 {
-  transition-delay: 150ms;
+.delay-100 {
+  transition-delay: 100ms;
 }
 
-.duration-200 {
-  transition-duration: 200ms;
-}
-
-.duration-500 {
-  transition-duration: 500ms;
-}
-
-.duration-1000 {
-  transition-duration: 1000ms;
-}
-
-.duration-\[1500ms\] {
-  transition-duration: 1500ms;
-}
-
-.duration-\[3000ms\] {
-  transition-duration: 3000ms;
-}
-
-.duration-\[5000ms\] {
-  transition-duration: 5000ms;
+.delay-500 {
+  transition-delay: 500ms;
 }
 
 .duration-150 {
   transition-duration: 150ms;
+}
+
+.duration-200 {
+  transition-duration: 200ms;
 }
 
 .ease-in-out {
