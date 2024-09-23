@@ -6,9 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 // 이는 참조형 자료의 특성인가? 브라우저로 인한 약간의 delay 속에 배열 수정이 먼저 일어나게 되고, 해당 주소만을 불러오는 브라우저는 수정된 이후의 값을 print하는 거?
 
 function App() {
-  const [score, setScore] = useState<number>(0);
-  const highScore = useRef<number>(0);
-  highScore.current = Math.max(highScore.current, score);
+  const [score, setScore] = useState<number | null>(0);
+  const [highScore, setHighScore] = useState<number>(0);
 
   return (
     <div className="flex justify-center h-screen w-screen bg-zinc-100">
@@ -30,9 +29,9 @@ function App() {
                 <p className="text-md text-white/70">BEST</p>
                 <p
                   className="text-xl text-white animate-[ping_0.5s]"
-                  key={highScore.current}
+                  key={highScore}
                 >
-                  {highScore.current}
+                  {highScore}
                 </p>
               </div>
             </div>
@@ -50,7 +49,7 @@ function App() {
               <button
                 className="w-[7rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-blue-500 hover:bg-blue-600 hover:scale-105 duration-200"
                 onClick={() => {
-                  setScore(-1);
+                  setScore(null);
                 }}
               >
                 New Game
@@ -58,7 +57,12 @@ function App() {
             </div>
           </div>
         </div>
-        <Board setScore={setScore} score={score}></Board>
+        <Board
+          setScore={setScore}
+          score={score}
+          setHighScore={setHighScore}
+          highScore={highScore}
+        ></Board>
       </div>
     </div>
   );
@@ -69,20 +73,31 @@ export default App;
 function Board({
   setScore,
   score,
+  setHighScore,
+  highScore,
 }: {
-  score: number;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
+  score: number | null;
+  setScore: React.Dispatch<React.SetStateAction<number | null>>;
+  highScore: number;
+  setHighScore: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const getInitialBlockList = () =>
+    Array.from({ length: 4 }, (_, r) =>
+      Array.from({ length: 4 }, (_, c) => ({ r, c })),
+    )
+      .flat()
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2)
+      .map(({ r, c }, ID) => ({
+        r,
+        c,
+        v: 1,
+        merged: false,
+        ID,
+        toZero: false,
+      }));
   const blockID = useRef<number>(2);
-  let [a1, b1, a2, b2] = [0, 0, 0, 0];
-  while (a1 === a2 && b1 === b2) {
-    [a1, b1, a2, b2] = [
-      Math.floor(Math.random() * 3 + 1),
-      Math.floor(Math.random() * 3 + 1),
-      Math.floor(Math.random() * 3 + 1),
-      Math.floor(Math.random() * 3 + 1),
-    ];
-  }
+
   const [clear, setClear] = useState<boolean>(false);
   const [blockList, setBlockList] = useState<
     {
@@ -93,24 +108,7 @@ function Board({
       ID: number;
       toZero: boolean;
     }[]
-  >([
-    {
-      r: a1,
-      c: b1,
-      v: 1,
-      merged: false,
-      ID: 0,
-      toZero: false,
-    },
-    {
-      r: a2,
-      c: b2,
-      v: 1,
-      merged: false,
-      ID: 1,
-      toZero: false,
-    },
-  ]);
+  >(getInitialBlockList);
 
   const color: string[] = [
     'bg-blue-200',
@@ -125,38 +123,12 @@ function Board({
   let z;
   const newGame = () => {
     blockID.current = 2;
-    [a1, b1, a2, b2] = [0, 0, 0, 0];
-    while (a1 === a2 && b1 === b2) {
-      [a1, b1, a2, b2] = [
-        Math.floor(Math.random() * 3 + 1),
-        Math.floor(Math.random() * 3 + 1),
-        Math.floor(Math.random() * 3 + 1),
-        Math.floor(Math.random() * 3 + 1),
-      ];
-    }
 
     setClear(false);
-    setBlockList([
-      {
-        r: a1,
-        c: b1,
-        v: 1,
-        merged: false,
-        ID: 0,
-        toZero: false,
-      },
-      {
-        r: a2,
-        c: b2,
-        v: 1,
-        merged: false,
-        ID: 1,
-        toZero: false,
-      },
-    ]);
+    setBlockList(getInitialBlockList);
     setScore(0);
   };
-  if (score === -1) {
+  if (score === null) {
     setTimeout(() => {
       setScore(0);
       newGame();
@@ -398,7 +370,10 @@ function Board({
             });
             blockID.current += 1;
             setBlockList(copy);
-            setScore(score + add);
+            if (score !== null) {
+              setScore(score + add);
+              setHighScore(Math.max(highScore, score + add));
+            }
           }
         });
       }
@@ -409,7 +384,7 @@ function Board({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [blockList, score, setScore]);
+  }, [blockList, highScore, score, setHighScore, setScore]);
   return (
     <div className="grid relative grid-cols-4 grid-rows-4 w-[35rem] h-[35rem] p-3 gap-3 rounded-2xl bg-zinc-300 shadow-xl ">
       {clear && (
@@ -429,49 +404,51 @@ function Board({
             className="col-span-1 bg-zinc-200 rounded-xl shadow-lg"
             key={index + 2000}
           >
-            {blockList.map((obj) => {
-              z = obj.ID + 2;
-              let delay = '';
-              let merge = '';
+            {blockList
+              .toSorted((b1, b2) => b1.ID - b2.ID)
+              .map((obj) => {
+                z = obj.ID + 2;
+                let delay = '';
+                let merge = '';
 
-              if (obj.toZero) {
-                z = 1;
-              }
-              if (obj.ID === blockID.current - 1) {
-                delay = 'animate-[fadeIn_1s_forwards]';
-              }
-              if (obj.merged) {
-                merge = 'animate-[grow_0.3s]';
-              }
-
-              let colorString = '';
-              color.forEach((cl, i) => {
-                if (i === obj.v) {
-                  colorString = cl;
+                if (obj.toZero) {
+                  z = 1;
                 }
-              });
+                if (obj.ID === blockID.current - 1) {
+                  delay = 'animate-[fadeIn_1s_forwards]';
+                }
+                if (obj.merged) {
+                  merge = 'animate-[grow_0.3s]';
+                }
 
-              return (
-                <div key={obj.ID + 500}>
-                  <div
-                    className={`absolute top-0 left-0 w-[125px] h-[125px] rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center`}
-                    style={{
-                      transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
-                      zIndex: z,
-                    }}
-                    key={obj.ID}
-                  >
+                let colorString = '';
+                color.forEach((cl, i) => {
+                  if (i === obj.v) {
+                    colorString = cl;
+                  }
+                });
+
+                return (
+                  <div key={obj.ID + 500}>
                     <div
-                      className={`flex items-center w-full h-full ${colorString} ${merge} ${delay} rounded-xl cursor-default`}
+                      className={`absolute top-0 left-0 w-[125px] h-[125px] rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center`}
+                      style={{
+                        transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
+                        zIndex: z,
+                      }}
+                      key={obj.ID}
                     >
-                      <p className="w-full text-center text-6xl text-white font-black">
-                        {2 ** obj.v}
-                      </p>
+                      <div
+                        className={`flex items-center w-full h-full ${colorString} ${merge} ${delay} rounded-xl cursor-default`}
+                      >
+                        <p className="w-full text-center text-6xl text-white font-black">
+                          {2 ** obj.v}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         );
       })}

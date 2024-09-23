@@ -2,6 +2,7 @@
 export default {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
+    fontFamily: { sans: 'Pretendard' },
     extend: {
       keyframes: {
         fadeIn: {

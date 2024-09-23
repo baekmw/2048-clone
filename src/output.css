@@ -156,8 +156,7 @@ html,
   -o-tab-size: 4;
   tab-size: 4;
   /* 3 */
-  font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: Pretendard;
   /* 4 */
   font-feature-settings: normal;
   /* 5 */
@@ -714,8 +713,8 @@ video {
   }
 }
 
-.animate-\[grow_0\.5s\] {
-  animation: grow 0.5s;
+.animate-\[grow_0\.3s\] {
+  animation: grow 0.3s;
 }
 
 @keyframes ping {
@@ -728,27 +727,6 @@ video {
 
 .animate-\[ping_0\.5s\] {
   animation: ping 0.5s;
-}
-
-@keyframes grow {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-
-  50% {
-    transform: scale(1.2);
-    opacity: 0.8;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-\[grow_0\.3s\] {
-  animation: grow 0.3s;
 }
 
 .cursor-default {
@@ -992,10 +970,6 @@ video {
 
 .ease-in-out {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.font-sans {
-  font-family: 'Pretendard', sans-serif;
 }
 
 .hover\:scale-105:hover {
