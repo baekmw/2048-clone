@@ -9,22 +9,29 @@ function App() {
   const [score, setScore] = useState<number>(0);
   const highScore = useRef<number>(0);
   highScore.current = Math.max(highScore.current, score);
+
   return (
     <div className="flex justify-center h-screen w-screen bg-zinc-100">
       <div className="flex flex-col justify-center w-[35rem] h-full gap-6">
         <div className="w-full h-fit">
           <div className="flex justify-between">
-            <p className="mb-8 font-black text-7xl text-green-500">128</p>
+            <p className="mb-8 font-black text-7xl text-blue-500">128</p>
             <div className="flex h-full w-fit gap-3">
               <div className="flex flex-col justify-center items-center h-16 w-[5rem] bg-blue-400/95 rounded-xl shadow-xl font-bold">
                 <p className="text-md text-white/70">SCORE</p>
-                <p className="text-xl text-white animate-[ping_0.5s]">
+                <p
+                  className="text-xl text-white animate-[ping_0.5s]"
+                  key={score}
+                >
                   {score}
                 </p>
               </div>
               <div className="flex flex-col justify-center items-center h-16 w-[5rem] bg-blue-400/95 rounded-xl shadow-xl font-bold">
                 <p className="text-md text-white/70">BEST</p>
-                <p className="text-xl text-white animate-[ping_0.5s]">
+                <p
+                  className="text-xl text-white animate-[ping_0.5s]"
+                  key={highScore.current}
+                >
                   {highScore.current}
                 </p>
               </div>
@@ -40,7 +47,12 @@ function App() {
               </div>
             </div>
             <div>
-              <button className="w-[7rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-blue-500 hover:bg-blue-600 hover:scale-105 duration-200">
+              <button
+                className="w-[7rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-blue-500 hover:bg-blue-600 hover:scale-105 duration-200"
+                onClick={() => {
+                  setScore(-1);
+                }}
+              >
                 New Game
               </button>
             </div>
@@ -71,6 +83,7 @@ function Board({
       Math.floor(Math.random() * 3 + 1),
     ];
   }
+  const [clear, setClear] = useState<boolean>(false);
   const [blockList, setBlockList] = useState<
     {
       r: number;
@@ -110,7 +123,45 @@ function Board({
     'bg-blue-900',
   ];
   let z;
+  const newGame = () => {
+    blockID.current = 2;
+    [a1, b1, a2, b2] = [0, 0, 0, 0];
+    while (a1 === a2 && b1 === b2) {
+      [a1, b1, a2, b2] = [
+        Math.floor(Math.random() * 3 + 1),
+        Math.floor(Math.random() * 3 + 1),
+        Math.floor(Math.random() * 3 + 1),
+        Math.floor(Math.random() * 3 + 1),
+      ];
+    }
 
+    setClear(false);
+    setBlockList([
+      {
+        r: a1,
+        c: b1,
+        v: 1,
+        merged: false,
+        ID: 0,
+        toZero: false,
+      },
+      {
+        r: a2,
+        c: b2,
+        v: 1,
+        merged: false,
+        ID: 1,
+        toZero: false,
+      },
+    ]);
+    setScore(0);
+  };
+  if (score === -1) {
+    setTimeout(() => {
+      setScore(0);
+      newGame();
+    }, 100);
+  }
   useEffect(() => {
     let unused: { r: number; c: number }[] = [];
     let isMoved1 = false;
@@ -323,6 +374,9 @@ function Board({
 
       copy.forEach((obj) => {
         maxV = Math.max(maxV, obj.v - 1);
+        if (obj.v === 7) {
+          setClear(true);
+        }
       });
       Array.from({ length: 16 }, (_, i) => i).forEach((_, index) => {
         unused.push({ r: Math.floor(index / 4), c: index % 4 });
@@ -358,6 +412,17 @@ function Board({
   }, [blockList, score, setScore]);
   return (
     <div className="grid relative grid-cols-4 grid-rows-4 w-[35rem] h-[35rem] p-3 gap-3 rounded-2xl bg-zinc-300 shadow-xl ">
+      {clear && (
+        <div className="absolute flex flex-col justify-center items-center inset-0 m-2 backdrop-blur-lg rounded-3xl z-[500] duration-300">
+          <div className="mb-3 font-bold text-3xl text-white">🔥CLEAR🔥</div>
+          <button
+            className="w-[10rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-orange-500 hover:bg-orange-600 hover:scale-105 duration-200"
+            onClick={newGame}
+          >
+            New Game
+          </button>
+        </div>
+      )}
       {Array.from({ length: 16 }, (_, i) => i).map((_, index) => {
         return (
           <div
@@ -387,7 +452,7 @@ function Board({
               });
 
               return (
-                <>
+                <div key={obj.ID + 500}>
                   <div
                     className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center ${delay} ${merge}`}
                     style={{
@@ -402,15 +467,7 @@ function Board({
                       </p>
                     </div>
                   </div>
-                  {obj.v === 7 && (
-                    <div
-                      key={obj.ID + 1000}
-                      className="absolute flex justify-center items-center inset-0 bg-black text-4xl animate-fadeIn z-50"
-                    >
-                      <div>clear</div>
-                    </div>
-                  )}
-                </>
+                </div>
               );
             })}
           </div>
