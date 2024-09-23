@@ -441,7 +441,7 @@ function Board({
                 delay = 'animate-[fadeIn_1s_forwards]';
               }
               if (obj.merged) {
-                merge = '';
+                merge = 'animate-[grow_0.3s]';
               }
 
               let colorString = '';
@@ -454,14 +454,16 @@ function Board({
               return (
                 <div key={obj.ID + 500}>
                   <div
-                    className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center ${delay} ${merge}`}
+                    className={`absolute top-0 left-0 w-[125px] h-[125px] rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center`}
                     style={{
                       transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
                       zIndex: z,
                     }}
                     key={obj.ID}
                   >
-                    <div className="flex items-center w-full h-full">
+                    <div
+                      className={`flex items-center w-full h-full ${colorString} ${merge} ${delay} rounded-xl cursor-default`}
+                    >
                       <p className="w-full text-center text-6xl text-white font-black">
                         {2 ** obj.v}
                       </p>
