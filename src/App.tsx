@@ -14,7 +14,7 @@ function App() {
       <div className="flex flex-col justify-center w-[35rem] h-full gap-6">
         <div className="w-full h-fit">
           <div className="flex justify-between">
-            <p className="mb-8 font-black text-7xl text-blue-500">128</p>
+            <p className="mb-8 font-black text-7xl text-green-500">128</p>
             <div className="flex h-full w-fit gap-3">
               <div className="flex flex-col justify-center items-center h-16 w-[5rem] bg-blue-400/95 rounded-xl shadow-xl font-bold">
                 <p className="text-md text-white/70">SCORE</p>
@@ -110,23 +110,9 @@ function Board({
     'bg-blue-900',
   ];
   let z;
-  let unused: number[][] = [];
-  const used: number[][] = [];
-  Array.from({ length: 16 }, (_, i) => i).map((_, index) => {
-    unused.push([Math.floor(index / 4), index % 4]);
-  });
-  unused = unused.filter((dat) => {
-    let usedee = false;
-    blockList.forEach((block) => {
-      if (JSON.stringify(dat) === JSON.stringify([block.r, block.c])) {
-        usedee = true;
-      }
-    });
-    if (!usedee) {
-      return dat;
-    }
-  });
+
   useEffect(() => {
+    let unused: { r: number; c: number }[] = [];
     let isMoved1 = false;
     let isMoved2 = false;
     let colList: number[] = [];
@@ -336,45 +322,31 @@ function Board({
       }
 
       copy.forEach((obj) => {
-        used.push([obj.r, obj.c]);
         maxV = Math.max(maxV, obj.v - 1);
       });
-
+      Array.from({ length: 16 }, (_, i) => i).forEach((_, index) => {
+        unused.push({ r: Math.floor(index / 4), c: index % 4 });
+      });
+      unused = unused.filter(
+        (dat) => !copy.some((block) => block.r === dat.r && block.c === dat.c),
+      );
       if (isMoved1 || isMoved2) {
-        let [r, c] = [
-          Math.floor(Math.random() * 4),
-          Math.floor(Math.random() * 4),
-        ];
-        let isUsed = false;
-        used.forEach((arr) => {
-          if (JSON.stringify(arr) === JSON.stringify([r, c])) {
-            isUsed = true;
+        const randomNum = Math.floor(Math.random() * unused.length);
+        unused.forEach((block, i) => {
+          if (i === randomNum) {
+            copy.push({
+              r: block.r,
+              c: block.c,
+              v: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
+              merged: false,
+              ID: blockID.current,
+              toZero: false,
+            });
+            blockID.current += 1;
+            setBlockList(copy);
+            setScore(score + add);
           }
         });
-        while (isUsed) {
-          [r, c] = [
-            Math.floor(Math.random() * 4),
-            Math.floor(Math.random() * 4),
-          ];
-          isUsed = false;
-          used.forEach((arr) => {
-            if (JSON.stringify(arr) === JSON.stringify([r, c])) {
-              isUsed = true;
-            }
-          });
-        }
-
-        copy.push({
-          r: r,
-          c: c,
-          v: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
-          merged: false,
-          ID: blockID.current,
-          toZero: false,
-        });
-        blockID.current += 1;
-        setBlockList(copy);
-        setScore(score + add);
       }
     };
 
@@ -383,17 +355,17 @@ function Board({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [blockList]);
+  }, [blockList, score, setScore]);
   return (
     <div className="grid relative grid-cols-4 grid-rows-4 w-[35rem] h-[35rem] p-3 gap-3 rounded-2xl bg-zinc-300 shadow-xl ">
       {Array.from({ length: 16 }, (_, i) => i).map((_, index) => {
         return (
           <div
             className="col-span-1 bg-zinc-200 rounded-xl shadow-lg"
-            key={index}
+            key={index + 2000}
           >
             {blockList.map((obj) => {
-              z = Number(obj.ID) + 2;
+              z = obj.ID + 2;
               let delay = '';
               let merge = '';
 
@@ -413,21 +385,32 @@ function Board({
                   colorString = cl;
                 }
               });
+
               return (
-                <div
-                  className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center ${delay} ${merge}`}
-                  style={{
-                    transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
-                    zIndex: z,
-                  }}
-                  key={obj.ID}
-                >
-                  <div className="flex items-center w-full h-full">
-                    <p className="w-full text-center text-6xl text-white font-black">
-                      {2 ** obj.v}
-                    </p>
+                <>
+                  <div
+                    className={`absolute top-0 left-0 w-[125px] h-[125px] ${colorString} rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center ${delay} ${merge}`}
+                    style={{
+                      transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
+                      zIndex: z,
+                    }}
+                    key={obj.ID}
+                  >
+                    <div className="flex items-center w-full h-full">
+                      <p className="w-full text-center text-6xl text-white font-black">
+                        {2 ** obj.v}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  {obj.v === 7 && (
+                    <div
+                      key={obj.ID + 1000}
+                      className="absolute flex justify-center items-center inset-0 bg-black text-4xl animate-fadeIn z-50"
+                    >
+                      <div>clear</div>
+                    </div>
+                  )}
+                </>
               );
             })}
           </div>
