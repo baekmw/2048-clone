@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function Board({
   setScore,
@@ -6,8 +6,8 @@ function Board({
   setHighScore,
   highScore,
 }: {
-  score: number | null;
-  setScore: React.Dispatch<React.SetStateAction<number | null>>;
+  score: number;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
   highScore: number;
   setHighScore: React.Dispatch<React.SetStateAction<number>>;
 }) {
@@ -51,19 +51,16 @@ function Board({
     'bg-blue-900',
   ];
   let z;
-  const newGame = () => {
+  const newGame = useCallback(() => {
     blockID.current = 2;
 
     setClear(false);
     setBlockList(getInitialBlockList);
     setScore(0);
-  };
-  if (score === null) {
-    setTimeout(() => {
-      setScore(0);
-      newGame();
-    }, 100);
-  }
+  }, [setScore]);
+  useEffect(() => {
+    newGame();
+  }, [newGame]);
   useEffect(() => {
     let unused: { r: number; c: number }[] = [];
     let isMoved1 = false;
@@ -300,9 +297,12 @@ function Board({
             });
             blockID.current += 1;
             setBlockList(copy);
-            if (score !== null) {
+            if (score !== 0) {
               setScore(score + add);
               setHighScore(Math.max(highScore, score + add));
+            } else {
+              setScore(add);
+              setHighScore(add);
             }
           }
         });

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Board from './Board';
 
 function App() {
-  const [score, setScore] = useState<number | null>(0);
+  const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
 
   return (
@@ -48,7 +48,7 @@ function App() {
               <button
                 className="w-[7rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-blue-500 hover:bg-blue-600 hover:scale-105 duration-200"
                 onClick={() => {
-                  setScore(null);
+                  setScore(0);
                 }}
               >
                 New Game
