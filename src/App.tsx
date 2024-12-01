@@ -2,9 +2,6 @@ import './App.css';
 
 import { useEffect, useRef, useState } from 'react';
 
-// q: console.log(배열); 배열 수정; 을 실행하면 수정된 후의 배열이 log에 찍힘.
-// 이는 참조형 자료의 특성인가? 브라우저로 인한 약간의 delay 속에 배열 수정이 먼저 일어나게 되고, 해당 주소만을 불러오는 브라우저는 수정된 이후의 값을 print하는 거?
-
 function App() {
   const [score, setScore] = useState<number | null>(0);
   const [highScore, setHighScore] = useState<number>(0);
