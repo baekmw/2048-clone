@@ -1,6 +1,6 @@
-import { act,renderHook } from '@testing-library/react-hooks';
-import { useCallback, useRef,useState } from 'react';
-import { describe, expect,it } from 'vitest';
+import { act, renderHook } from '@testing-library/react-hooks';
+import { useCallback, useRef, useState } from 'react';
+import { describe, expect, it } from 'vitest';
 
 describe('newGame function', () => {
   it('should reset the game state', () => {
