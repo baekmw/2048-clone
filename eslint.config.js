@@ -1,15 +1,20 @@
+import js from '@eslint/js';
 import react from '@woohm402/eslint-config-react';
 
 export default [
+  js.configs.recommended,
+  ...react({
+    tsconfigRootDir: import.meta.dirname,
+  }),
   {
-    overrides: [
-      {
-        files: ['src/*.test.ts'],
-        env: {
-          jest: true,
-        },
+    files: ['src/*.test.ts'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
       },
-    ],
+    },
+  },
+  {
     ignores: [
       'eslint.config.js',
       '.yarn',
@@ -17,7 +22,4 @@ export default [
       'postcss.config.cjs',
     ],
   },
-  ...react({
-    tsconfigRootDir: import.meta.dirname,
-  }),
 ];

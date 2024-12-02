@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from 'react';
 
 describe('newGame function', () => {
   it('should reset the game state', () => {
-    // 초기 상태를 모방하여 hook을 생성
     const { result } = renderHook(() => {
       const [score, setScore] = useState<number>(10);
       const [clear, setClear] = useState<boolean>(true);
