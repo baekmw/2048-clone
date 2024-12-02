@@ -76,7 +76,7 @@ function App() {
           </div>
           <div className="flex justify-between items-end">
             <div className="text-md text-zinc-400 font-semibold">
-              <p>Join the tiles, get to 128!</p>
+              <p>Join the tiles, get to 128!!</p>
               <div className="flex gap-3 underline">
                 <button>How to play?</button>
                 <p className="cursor-default">|</p>
