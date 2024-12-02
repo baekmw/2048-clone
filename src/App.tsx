@@ -1,12 +1,48 @@
 import './App.css';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import Board from './Board';
 
 function App() {
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(0);
+  const [clear, setClear] = useState<boolean>(false);
+  const getInitialBlockList = () =>
+    Array.from({ length: 4 }, (_, r) =>
+      Array.from({ length: 4 }, (_, c) => ({ r, c })),
+    )
+      .flat()
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2)
+      .map(({ r, c }, ID) => ({
+        r,
+        c,
+        v: 1,
+        merged: false,
+        ID,
+        toZero: false,
+      }));
+  const blockID = useRef<number>(2);
+
+  const [blockList, setBlockList] = useState<
+    {
+      r: number;
+      c: number;
+      v: number;
+      merged: boolean;
+      ID: number;
+      toZero: boolean;
+    }[]
+  >(getInitialBlockList);
+
+  const newGame = useCallback(() => {
+    blockID.current = 2;
+
+    setClear(false);
+    setBlockList(getInitialBlockList);
+    setScore(0);
+  }, []);
 
   return (
     <div className="flex justify-center h-screen w-screen bg-zinc-100">
@@ -47,9 +83,7 @@ function App() {
             <div>
               <button
                 className="w-[7rem] h-10 rounded-lg shadow-xl text-white font-semibold bg-blue-500 hover:bg-blue-600 hover:scale-105 duration-200"
-                onClick={() => {
-                  setScore(0);
-                }}
+                onClick={newGame}
               >
                 New Game
               </button>
@@ -61,6 +95,12 @@ function App() {
           score={score}
           setHighScore={setHighScore}
           highScore={highScore}
+          clear={clear}
+          setClear={setClear}
+          blockID={blockID}
+          blockList={blockList}
+          setBlockList={setBlockList}
+          newGame={newGame}
         ></Board>
       </div>
     </div>

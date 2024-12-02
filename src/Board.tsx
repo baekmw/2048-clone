@@ -1,45 +1,46 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect } from 'react';
 
-function Board({
+const Board = ({
   setScore,
   score,
   setHighScore,
   highScore,
+  clear,
+  setClear,
+  blockID,
+  blockList,
+  setBlockList,
+  newGame,
 }: {
   score: number;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setScore: Dispatch<SetStateAction<number>>;
   highScore: number;
-  setHighScore: React.Dispatch<React.SetStateAction<number>>;
-}) {
-  const getInitialBlockList = () =>
-    Array.from({ length: 4 }, (_, r) =>
-      Array.from({ length: 4 }, (_, c) => ({ r, c })),
-    )
-      .flat()
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 2)
-      .map(({ r, c }, ID) => ({
-        r,
-        c,
-        v: 1,
-        merged: false,
-        ID,
-        toZero: false,
-      }));
-  const blockID = useRef<number>(2);
-
-  const [clear, setClear] = useState<boolean>(false);
-  const [blockList, setBlockList] = useState<
-    {
-      r: number;
-      c: number;
-      v: number;
-      merged: boolean;
-      ID: number;
-      toZero: boolean;
-    }[]
-  >(getInitialBlockList);
-
+  setHighScore: Dispatch<SetStateAction<number>>;
+  clear: boolean;
+  setClear: Dispatch<SetStateAction<boolean>>;
+  blockID: React.MutableRefObject<number>;
+  blockList: {
+    r: number;
+    c: number;
+    v: number;
+    merged: boolean;
+    ID: number;
+    toZero: boolean;
+  }[];
+  setBlockList: Dispatch<
+    SetStateAction<
+      {
+        r: number;
+        c: number;
+        v: number;
+        merged: boolean;
+        ID: number;
+        toZero: boolean;
+      }[]
+    >
+  >;
+  newGame: () => void;
+}) => {
   const color: string[] = [
     'bg-blue-200',
     'bg-blue-300',
@@ -51,16 +52,11 @@ function Board({
     'bg-blue-900',
   ];
   let z;
-  const newGame = useCallback(() => {
-    blockID.current = 2;
 
-    setClear(false);
-    setBlockList(getInitialBlockList);
-    setScore(0);
-  }, [setScore]);
   useEffect(() => {
     newGame();
   }, [newGame]);
+
   useEffect(() => {
     let unused: { r: number; c: number }[] = [];
     let isMoved1 = false;
@@ -314,7 +310,16 @@ function Board({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [blockList, highScore, score, setHighScore, setScore]);
+  }, [
+    blockID,
+    blockList,
+    highScore,
+    score,
+    setBlockList,
+    setClear,
+    setHighScore,
+    setScore,
+  ]);
   return (
     <div className="grid relative grid-cols-4 grid-rows-4 w-[35rem] h-[35rem] p-3 gap-3 rounded-2xl bg-zinc-300 shadow-xl ">
       {clear && (
@@ -384,6 +389,6 @@ function Board({
       })}
     </div>
   );
-}
+};
 
 export default Board;
