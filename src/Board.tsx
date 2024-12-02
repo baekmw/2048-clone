@@ -275,7 +275,7 @@ const Board = ({
               block.columnIndex === dat.columnIndex,
           ),
       );
-      if (isMoved || isMoved) {
+      if (isMoved) {
         const randomNum = Math.floor(Math.random() * unused.length);
         unused.forEach((block, i) => {
           if (i === randomNum) {
