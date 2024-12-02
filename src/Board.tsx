@@ -1,5 +1,27 @@
 import { type Dispatch, type SetStateAction, useEffect } from 'react';
 
+type blockListType = {
+  rowIndex: number;
+  columnIndex: number;
+  value: number;
+  merged: boolean;
+  ID: number;
+  toZero: boolean;
+}[];
+
+type BoardPropsType = {
+  score: number;
+  setScore: Dispatch<SetStateAction<number>>;
+  highScore: number;
+  setHighScore: Dispatch<SetStateAction<number>>;
+  clear: boolean;
+  setClear: Dispatch<SetStateAction<boolean>>;
+  blockID: React.MutableRefObject<number>;
+  blockList: blockListType;
+  setBlockList: Dispatch<SetStateAction<blockListType>>;
+  newGame: () => void;
+};
+
 const Board = ({
   setScore,
   score,
@@ -11,36 +33,7 @@ const Board = ({
   blockList,
   setBlockList,
   newGame,
-}: {
-  score: number;
-  setScore: Dispatch<SetStateAction<number>>;
-  highScore: number;
-  setHighScore: Dispatch<SetStateAction<number>>;
-  clear: boolean;
-  setClear: Dispatch<SetStateAction<boolean>>;
-  blockID: React.MutableRefObject<number>;
-  blockList: {
-    rowIndex: number;
-    columnIndex: number;
-    value: number;
-    merged: boolean;
-    ID: number;
-    toZero: boolean;
-  }[];
-  setBlockList: Dispatch<
-    SetStateAction<
-      {
-        rowIndex: number;
-        columnIndex: number;
-        value: number;
-        merged: boolean;
-        ID: number;
-        toZero: boolean;
-      }[]
-    >
-  >;
-  newGame: () => void;
-}) => {
+}: BoardPropsType) => {
   const color: string[] = [
     'bg-blue-200',
     'bg-blue-300',
@@ -51,7 +44,7 @@ const Board = ({
     'bg-blue-800',
     'bg-blue-900',
   ];
-  let z;
+  let zIndex;
 
   useEffect(() => {
     newGame();
@@ -93,47 +86,38 @@ const Board = ({
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
-          let done1: boolean = false;
-          let done2: boolean = false;
+          let settingRow = 0;
 
-          while (!done1 && !done2) {
-            done1 = true;
-            done2 = true;
-            let settingRow: number = 0;
+          copy.forEach((obj, i) => {
+            // 모든 block 순회
 
-            copy.forEach((obj, i) => {
-              // 모든 block 순회
+            if (obj.columnIndex === col && !obj.toZero) {
+              // 특정 column의 block 선택
 
-              if (obj.columnIndex === col && !obj.toZero) {
-                // 특정 column의 block 선택
+              if (obj.rowIndex - settingRow !== 0) {
+                // 움직이는 block이 존재할 때
+                isMoved1 = true;
+              }
+              obj.rowIndex = settingRow;
+              settingRow += 1;
+              const next = copy[i + 1];
 
-                if (obj.rowIndex - settingRow !== 0) {
-                  // 움직이는 block이 존재할 때
-                  done1 = false;
-                  isMoved1 = true;
-                }
-                obj.rowIndex = settingRow;
-                settingRow += 1;
-                const next = copy[i + 1];
-
-                if (next !== undefined) {
-                  if (
-                    next.columnIndex === col &&
-                    next.value === obj.value &&
-                    !next.merged
-                  ) {
-                    obj.value += 1;
-                    add += 2 ** obj.value;
-                    next.rowIndex = obj.rowIndex;
-                    next.toZero = true;
-                    obj.merged = true;
-                    done2 = false;
-                    isMoved2 = true;
-                  }
+              if (next !== undefined) {
+                if (
+                  next.columnIndex === col &&
+                  next.value === obj.value &&
+                  !next.merged
+                ) {
+                  obj.value += 1;
+                  add += 2 ** obj.value;
+                  next.rowIndex = obj.rowIndex;
+                  next.toZero = true;
+                  obj.merged = true;
+                  isMoved2 = true;
                 }
               }
-            });
-          }
+            }
+          });
         });
       } else if (e.key === 'ArrowDown') {
         // row 기준 ➡️ col 기준 오름차순 정렬
@@ -142,47 +126,38 @@ const Board = ({
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
-          let done1: boolean = false;
-          let done2: boolean = false;
+          let settingRow: number = 3;
 
-          while (!done1 && !done2) {
-            done1 = true;
-            done2 = true;
-            let settingRow: number = 3;
+          copy.forEach((obj, i) => {
+            // 모든 block 순회
 
-            copy.forEach((obj, i) => {
-              // 모든 block 순회
+            if (obj.columnIndex === col && !obj.toZero) {
+              // 특정 column의 block 선택
 
-              if (obj.columnIndex === col && !obj.toZero) {
-                // 특정 column의 block 선택
+              if (settingRow - obj.rowIndex !== 0) {
+                // 움직이는 block이 존재할 때
+                isMoved1 = true;
+              }
+              obj.rowIndex = settingRow;
+              settingRow -= 1;
+              const next = copy[i + 1];
+              if (next !== undefined) {
+                if (
+                  next.columnIndex === col &&
+                  next.value === obj.value &&
+                  !next.merged
+                ) {
+                  obj.value += 1;
+                  add += 2 ** obj.value;
 
-                if (settingRow - obj.rowIndex !== 0) {
-                  // 움직이는 block이 존재할 때
-                  done1 = false;
-                  isMoved1 = true;
-                }
-                obj.rowIndex = settingRow;
-                settingRow -= 1;
-                const next = copy[i + 1];
-                if (next !== undefined) {
-                  if (
-                    next.columnIndex === col &&
-                    next.value === obj.value &&
-                    !next.merged
-                  ) {
-                    obj.value += 1;
-                    add += 2 ** obj.value;
-
-                    next.rowIndex = obj.rowIndex;
-                    next.toZero = true;
-                    obj.merged = true;
-                    done2 = false;
-                    isMoved2 = true;
-                  }
+                  next.rowIndex = obj.rowIndex;
+                  next.toZero = true;
+                  obj.merged = true;
+                  isMoved2 = true;
                 }
               }
-            });
-          }
+            }
+          });
         });
       } else if (e.key === 'ArrowRight') {
         // col 기준 ➡️ row 기준 오름차순 정렬
@@ -191,46 +166,37 @@ const Board = ({
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
-          let done1: boolean = false;
-          let done2: boolean = false;
+          let settingCol: number = 3;
 
-          while (!done1 && !done2) {
-            done1 = true;
-            done2 = true;
-            let settingCol: number = 3;
+          copy.forEach((obj, i) => {
+            // 모든 block 순회
 
-            copy.forEach((obj, i) => {
-              // 모든 block 순회
+            if (obj.rowIndex === row && !obj.toZero) {
+              // 특정 row의 block 선택
 
-              if (obj.rowIndex === row && !obj.toZero) {
-                // 특정 row의 block 선택
-
-                if (settingCol - obj.columnIndex !== 0) {
-                  // 움직이는 block이 존재할 때
-                  done1 = false;
-                  isMoved1 = true;
-                }
-                obj.columnIndex = settingCol;
-                settingCol -= 1;
-                const next = copy[i + 1];
-                if (next !== undefined) {
-                  if (
-                    next.rowIndex === row &&
-                    next.value === obj.value &&
-                    !next.merged
-                  ) {
-                    add += 2 ** obj.value;
-                    obj.value += 1;
-                    next.columnIndex = obj.columnIndex;
-                    next.toZero = true;
-                    obj.merged = true;
-                    done2 = false;
-                    isMoved2 = true;
-                  }
+              if (settingCol - obj.columnIndex !== 0) {
+                // 움직이는 block이 존재할 때
+                isMoved1 = true;
+              }
+              obj.columnIndex = settingCol;
+              settingCol -= 1;
+              const next = copy[i + 1];
+              if (next !== undefined) {
+                if (
+                  next.rowIndex === row &&
+                  next.value === obj.value &&
+                  !next.merged
+                ) {
+                  add += 2 ** obj.value;
+                  obj.value += 1;
+                  next.columnIndex = obj.columnIndex;
+                  next.toZero = true;
+                  obj.merged = true;
+                  isMoved2 = true;
                 }
               }
-            });
-          }
+            }
+          });
         });
       } else if (e.key === 'ArrowLeft') {
         // col 기준 ➡️ row 기준 오름차순 정렬
@@ -239,47 +205,38 @@ const Board = ({
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
-          let done1: boolean = false;
-          let done2: boolean = false;
+          let settingCol: number = 0;
 
-          while (!done1 && !done2) {
-            done1 = true;
-            done2 = true;
-            let settingCol: number = 0;
+          copy.forEach((obj, i) => {
+            // 모든 block 순회
 
-            copy.forEach((obj, i) => {
-              // 모든 block 순회
+            if (obj.rowIndex === row && !obj.toZero) {
+              // 특정 row의 block 선택
 
-              if (obj.rowIndex === row && !obj.toZero) {
-                // 특정 row의 block 선택
+              if (obj.columnIndex - settingCol !== 0) {
+                // 움직이는 block이 존재할 때
+                isMoved1 = true;
+              }
+              obj.columnIndex = settingCol;
+              settingCol += 1;
+              const next = copy[i + 1];
+              if (next !== undefined) {
+                if (
+                  next.rowIndex === row &&
+                  next.value === obj.value &&
+                  !next.merged
+                ) {
+                  obj.value += 1;
+                  add += 2 ** obj.value;
 
-                if (obj.columnIndex - settingCol !== 0) {
-                  // 움직이는 block이 존재할 때
-                  done1 = false;
-                  isMoved1 = true;
-                }
-                obj.columnIndex = settingCol;
-                settingCol += 1;
-                const next = copy[i + 1];
-                if (next !== undefined) {
-                  if (
-                    next.rowIndex === row &&
-                    next.value === obj.value &&
-                    !next.merged
-                  ) {
-                    obj.value += 1;
-                    add += 2 ** obj.value;
-
-                    next.columnIndex = obj.columnIndex;
-                    next.toZero = true;
-                    obj.merged = true;
-                    done2 = false;
-                    isMoved2 = true;
-                  }
+                  next.columnIndex = obj.columnIndex;
+                  next.toZero = true;
+                  obj.merged = true;
+                  isMoved2 = true;
                 }
               }
-            });
-          }
+            }
+          });
         });
       }
 
@@ -366,12 +323,12 @@ const Board = ({
             {blockList
               .toSorted((b1, b2) => b1.ID - b2.ID)
               .map((obj) => {
-                z = obj.ID + 2;
+                zIndex = obj.ID + 2;
                 let delay = '';
                 let merge = '';
 
                 if (obj.toZero) {
-                  z = 1;
+                  zIndex = 1;
                 }
                 if (obj.ID === blockID.current - 1) {
                   delay = 'animate-[fadeIn_1s_forwards]';
@@ -393,7 +350,7 @@ const Board = ({
                       className={`absolute top-0 left-0 w-[125px] h-[125px] rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center`}
                       style={{
                         transform: `translate(${12 * (obj.columnIndex + 1) + 125 * obj.columnIndex}px, ${12 * (obj.rowIndex + 1) + 125 * obj.rowIndex}px)`,
-                        zIndex: z,
+                        zIndex: zIndex,
                       }}
                       key={obj.ID}
                     >
