@@ -9,16 +9,19 @@ function App() {
   const [highScore, setHighScore] = useState<number>(0);
   const [clear, setClear] = useState<boolean>(false);
   const getInitialBlockList = () =>
-    Array.from({ length: 4 }, (_, r) =>
-      Array.from({ length: 4 }, (_, c) => ({ r, c })),
+    Array.from({ length: 4 }, (_, rowIndex) =>
+      Array.from({ length: 4 }, (_, columnIndex) => ({
+        rowIndex,
+        columnIndex,
+      })),
     )
       .flat()
       .sort(() => Math.random() - 0.5)
       .slice(0, 2)
-      .map(({ r, c }, ID) => ({
-        r,
-        c,
-        v: 1,
+      .map(({ rowIndex, columnIndex }, ID) => ({
+        rowIndex,
+        columnIndex,
+        value: 1,
         merged: false,
         ID,
         toZero: false,
@@ -27,9 +30,9 @@ function App() {
 
   const [blockList, setBlockList] = useState<
     {
-      r: number;
-      c: number;
-      v: number;
+      rowIndex: number;
+      columnIndex: number;
+      value: number;
       merged: boolean;
       ID: number;
       toZero: boolean;

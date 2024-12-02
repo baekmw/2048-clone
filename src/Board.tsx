@@ -20,9 +20,9 @@ const Board = ({
   setClear: Dispatch<SetStateAction<boolean>>;
   blockID: React.MutableRefObject<number>;
   blockList: {
-    r: number;
-    c: number;
-    v: number;
+    rowIndex: number;
+    columnIndex: number;
+    value: number;
     merged: boolean;
     ID: number;
     toZero: boolean;
@@ -30,9 +30,9 @@ const Board = ({
   setBlockList: Dispatch<
     SetStateAction<
       {
-        r: number;
-        c: number;
-        v: number;
+        rowIndex: number;
+        columnIndex: number;
+        value: number;
         merged: boolean;
         ID: number;
         toZero: boolean;
@@ -58,7 +58,7 @@ const Board = ({
   }, [newGame]);
 
   useEffect(() => {
-    let unused: { r: number; c: number }[] = [];
+    let unused: { rowIndex: number; columnIndex: number }[] = [];
     let isMoved1 = false;
     let isMoved2 = false;
     let colList: number[] = [];
@@ -68,8 +68,8 @@ const Board = ({
 
     let copy = blockList.map((block) => {
       block.merged = false;
-      colList.push(block.c);
-      rowList.push(block.r);
+      colList.push(block.columnIndex);
+      rowList.push(block.rowIndex);
       return {
         ...block,
       };
@@ -88,8 +88,8 @@ const Board = ({
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'ArrowUp') {
         // row 기준 ➡️ col 기준 오름차순 정렬
-        copy = copy.sort((a, b) => a.r - b.r);
-        copy = copy.sort((a, b) => a.c - b.c);
+        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
+        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
@@ -104,23 +104,27 @@ const Board = ({
             copy.forEach((obj, i) => {
               // 모든 block 순회
 
-              if (obj.c === col && !obj.toZero) {
+              if (obj.columnIndex === col && !obj.toZero) {
                 // 특정 column의 block 선택
 
-                if (obj.r - settingRow !== 0) {
+                if (obj.rowIndex - settingRow !== 0) {
                   // 움직이는 block이 존재할 때
                   done1 = false;
                   isMoved1 = true;
                 }
-                obj.r = settingRow;
+                obj.rowIndex = settingRow;
                 settingRow += 1;
                 const next = copy[i + 1];
 
                 if (next !== undefined) {
-                  if (next.c === col && next.v === obj.v && !next.merged) {
-                    obj.v += 1;
-                    add += 2 ** obj.v;
-                    next.r = obj.r;
+                  if (
+                    next.columnIndex === col &&
+                    next.value === obj.value &&
+                    !next.merged
+                  ) {
+                    obj.value += 1;
+                    add += 2 ** obj.value;
+                    next.rowIndex = obj.rowIndex;
                     next.toZero = true;
                     obj.merged = true;
                     done2 = false;
@@ -133,8 +137,8 @@ const Board = ({
         });
       } else if (e.key === 'ArrowDown') {
         // row 기준 ➡️ col 기준 오름차순 정렬
-        copy = copy.sort((a, b) => b.r - a.r);
-        copy = copy.sort((a, b) => a.c - b.c);
+        copy = copy.sort((a, b) => b.rowIndex - a.rowIndex);
+        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
@@ -149,23 +153,27 @@ const Board = ({
             copy.forEach((obj, i) => {
               // 모든 block 순회
 
-              if (obj.c === col && !obj.toZero) {
+              if (obj.columnIndex === col && !obj.toZero) {
                 // 특정 column의 block 선택
 
-                if (settingRow - obj.r !== 0) {
+                if (settingRow - obj.rowIndex !== 0) {
                   // 움직이는 block이 존재할 때
                   done1 = false;
                   isMoved1 = true;
                 }
-                obj.r = settingRow;
+                obj.rowIndex = settingRow;
                 settingRow -= 1;
                 const next = copy[i + 1];
                 if (next !== undefined) {
-                  if (next.c === col && next.v === obj.v && !next.merged) {
-                    obj.v += 1;
-                    add += 2 ** obj.v;
+                  if (
+                    next.columnIndex === col &&
+                    next.value === obj.value &&
+                    !next.merged
+                  ) {
+                    obj.value += 1;
+                    add += 2 ** obj.value;
 
-                    next.r = obj.r;
+                    next.rowIndex = obj.rowIndex;
                     next.toZero = true;
                     obj.merged = true;
                     done2 = false;
@@ -178,8 +186,8 @@ const Board = ({
         });
       } else if (e.key === 'ArrowRight') {
         // col 기준 ➡️ row 기준 오름차순 정렬
-        copy = copy.sort((a, b) => b.c - a.c);
-        copy = copy.sort((a, b) => a.r - b.r);
+        copy = copy.sort((a, b) => b.columnIndex - a.columnIndex);
+        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
@@ -194,22 +202,26 @@ const Board = ({
             copy.forEach((obj, i) => {
               // 모든 block 순회
 
-              if (obj.r === row && !obj.toZero) {
+              if (obj.rowIndex === row && !obj.toZero) {
                 // 특정 row의 block 선택
 
-                if (settingCol - obj.c !== 0) {
+                if (settingCol - obj.columnIndex !== 0) {
                   // 움직이는 block이 존재할 때
                   done1 = false;
                   isMoved1 = true;
                 }
-                obj.c = settingCol;
+                obj.columnIndex = settingCol;
                 settingCol -= 1;
                 const next = copy[i + 1];
                 if (next !== undefined) {
-                  if (next.r === row && next.v === obj.v && !next.merged) {
-                    add += 2 ** obj.v;
-                    obj.v += 1;
-                    next.c = obj.c;
+                  if (
+                    next.rowIndex === row &&
+                    next.value === obj.value &&
+                    !next.merged
+                  ) {
+                    add += 2 ** obj.value;
+                    obj.value += 1;
+                    next.columnIndex = obj.columnIndex;
                     next.toZero = true;
                     obj.merged = true;
                     done2 = false;
@@ -222,8 +234,8 @@ const Board = ({
         });
       } else if (e.key === 'ArrowLeft') {
         // col 기준 ➡️ row 기준 오름차순 정렬
-        copy = copy.sort((a, b) => a.c - b.c);
-        copy = copy.sort((a, b) => a.r - b.r);
+        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
+        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
@@ -238,23 +250,27 @@ const Board = ({
             copy.forEach((obj, i) => {
               // 모든 block 순회
 
-              if (obj.r === row && !obj.toZero) {
+              if (obj.rowIndex === row && !obj.toZero) {
                 // 특정 row의 block 선택
 
-                if (obj.c - settingCol !== 0) {
+                if (obj.columnIndex - settingCol !== 0) {
                   // 움직이는 block이 존재할 때
                   done1 = false;
                   isMoved1 = true;
                 }
-                obj.c = settingCol;
+                obj.columnIndex = settingCol;
                 settingCol += 1;
                 const next = copy[i + 1];
                 if (next !== undefined) {
-                  if (next.r === row && next.v === obj.v && !next.merged) {
-                    obj.v += 1;
-                    add += 2 ** obj.v;
+                  if (
+                    next.rowIndex === row &&
+                    next.value === obj.value &&
+                    !next.merged
+                  ) {
+                    obj.value += 1;
+                    add += 2 ** obj.value;
 
-                    next.c = obj.c;
+                    next.columnIndex = obj.columnIndex;
                     next.toZero = true;
                     obj.merged = true;
                     done2 = false;
@@ -268,25 +284,33 @@ const Board = ({
       }
 
       copy.forEach((obj) => {
-        maxV = Math.max(maxV, obj.v - 1);
-        if (obj.v === 7) {
+        maxV = Math.max(maxV, obj.value - 1);
+        if (obj.value === 7) {
           setClear(true);
         }
       });
       Array.from({ length: 16 }, (_, i) => i).forEach((_, index) => {
-        unused.push({ r: Math.floor(index / 4), c: index % 4 });
+        unused.push({
+          rowIndex: Math.floor(index / 4),
+          columnIndex: index % 4,
+        });
       });
       unused = unused.filter(
-        (dat) => !copy.some((block) => block.r === dat.r && block.c === dat.c),
+        (dat) =>
+          !copy.some(
+            (block) =>
+              block.rowIndex === dat.rowIndex &&
+              block.columnIndex === dat.columnIndex,
+          ),
       );
       if (isMoved1 || isMoved2) {
         const randomNum = Math.floor(Math.random() * unused.length);
         unused.forEach((block, i) => {
           if (i === randomNum) {
             copy.push({
-              r: block.r,
-              c: block.c,
-              v: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
+              rowIndex: block.rowIndex,
+              columnIndex: block.columnIndex,
+              value: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
               merged: false,
               ID: blockID.current,
               toZero: false,
@@ -358,7 +382,7 @@ const Board = ({
 
                 let colorString = '';
                 color.forEach((cl, i) => {
-                  if (i === obj.v) {
+                  if (i === obj.value) {
                     colorString = cl;
                   }
                 });
@@ -368,7 +392,7 @@ const Board = ({
                     <div
                       className={`absolute top-0 left-0 w-[125px] h-[125px] rounded-xl cursor-default transition-all duration-150 ease-in-out origin-center`}
                       style={{
-                        transform: `translate(${12 * (obj.c + 1) + 125 * obj.c}px, ${12 * (obj.r + 1) + 125 * obj.r}px)`,
+                        transform: `translate(${12 * (obj.columnIndex + 1) + 125 * obj.columnIndex}px, ${12 * (obj.rowIndex + 1) + 125 * obj.rowIndex}px)`,
                         zIndex: z,
                       }}
                       key={obj.ID}
@@ -377,7 +401,7 @@ const Board = ({
                         className={`flex items-center w-full h-full ${colorString} ${merge} ${delay} rounded-xl cursor-default`}
                       >
                         <p className="w-full text-center text-6xl text-white font-black">
-                          {2 ** obj.v}
+                          {2 ** obj.value}
                         </p>
                       </div>
                     </div>
