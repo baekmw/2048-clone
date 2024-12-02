@@ -52,14 +52,13 @@ const Board = ({
 
   useEffect(() => {
     let unused: { rowIndex: number; columnIndex: number }[] = [];
-    let isMoved1 = false;
-    let isMoved2 = false;
+    let isMoved = false;
     let colList: number[] = [];
     let rowList: number[] = [];
-    let maxV = 1;
+    let maxValue = 1;
     let add = 0;
 
-    let copy = blockList.map((block) => {
+    let copiedBlockList = blockList.map((block) => {
       block.merged = false;
       colList.push(block.columnIndex);
       rowList.push(block.rowIndex);
@@ -68,7 +67,7 @@ const Board = ({
       };
     });
 
-    copy = copy.filter((dat) => {
+    copiedBlockList = copiedBlockList.filter((dat) => {
       if (!dat.toZero) {
         return dat;
       }
@@ -81,14 +80,18 @@ const Board = ({
     const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'ArrowUp') {
         // row 기준 ➡️ col 기준 오름차순 정렬
-        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
-        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.rowIndex - b.rowIndex,
+        );
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.columnIndex - b.columnIndex,
+        );
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
           let settingRow = 0;
 
-          copy.forEach((obj, i) => {
+          copiedBlockList.forEach((obj, i) => {
             // 모든 block 순회
 
             if (obj.columnIndex === col && !obj.toZero) {
@@ -96,11 +99,11 @@ const Board = ({
 
               if (obj.rowIndex - settingRow !== 0) {
                 // 움직이는 block이 존재할 때
-                isMoved1 = true;
+                isMoved = true;
               }
               obj.rowIndex = settingRow;
               settingRow += 1;
-              const next = copy[i + 1];
+              const next = copiedBlockList[i + 1];
 
               if (next !== undefined) {
                 if (
@@ -113,7 +116,7 @@ const Board = ({
                   next.rowIndex = obj.rowIndex;
                   next.toZero = true;
                   obj.merged = true;
-                  isMoved2 = true;
+                  isMoved = true;
                 }
               }
             }
@@ -121,14 +124,18 @@ const Board = ({
         });
       } else if (e.key === 'ArrowDown') {
         // row 기준 ➡️ col 기준 오름차순 정렬
-        copy = copy.sort((a, b) => b.rowIndex - a.rowIndex);
-        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => b.rowIndex - a.rowIndex,
+        );
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.columnIndex - b.columnIndex,
+        );
 
         // block 이 존재하는 column에 대해서만 실행
         colList.forEach((col) => {
-          let settingRow: number = 3;
+          let settingRow = 3;
 
-          copy.forEach((obj, i) => {
+          copiedBlockList.forEach((obj, i) => {
             // 모든 block 순회
 
             if (obj.columnIndex === col && !obj.toZero) {
@@ -136,11 +143,11 @@ const Board = ({
 
               if (settingRow - obj.rowIndex !== 0) {
                 // 움직이는 block이 존재할 때
-                isMoved1 = true;
+                isMoved = true;
               }
               obj.rowIndex = settingRow;
               settingRow -= 1;
-              const next = copy[i + 1];
+              const next = copiedBlockList[i + 1];
               if (next !== undefined) {
                 if (
                   next.columnIndex === col &&
@@ -153,7 +160,7 @@ const Board = ({
                   next.rowIndex = obj.rowIndex;
                   next.toZero = true;
                   obj.merged = true;
-                  isMoved2 = true;
+                  isMoved = true;
                 }
               }
             }
@@ -161,14 +168,18 @@ const Board = ({
         });
       } else if (e.key === 'ArrowRight') {
         // col 기준 ➡️ row 기준 오름차순 정렬
-        copy = copy.sort((a, b) => b.columnIndex - a.columnIndex);
-        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => b.columnIndex - a.columnIndex,
+        );
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.rowIndex - b.rowIndex,
+        );
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
           let settingCol: number = 3;
 
-          copy.forEach((obj, i) => {
+          copiedBlockList.forEach((obj, i) => {
             // 모든 block 순회
 
             if (obj.rowIndex === row && !obj.toZero) {
@@ -176,11 +187,11 @@ const Board = ({
 
               if (settingCol - obj.columnIndex !== 0) {
                 // 움직이는 block이 존재할 때
-                isMoved1 = true;
+                isMoved = true;
               }
               obj.columnIndex = settingCol;
               settingCol -= 1;
-              const next = copy[i + 1];
+              const next = copiedBlockList[i + 1];
               if (next !== undefined) {
                 if (
                   next.rowIndex === row &&
@@ -192,7 +203,7 @@ const Board = ({
                   next.columnIndex = obj.columnIndex;
                   next.toZero = true;
                   obj.merged = true;
-                  isMoved2 = true;
+                  isMoved = true;
                 }
               }
             }
@@ -200,14 +211,18 @@ const Board = ({
         });
       } else if (e.key === 'ArrowLeft') {
         // col 기준 ➡️ row 기준 오름차순 정렬
-        copy = copy.sort((a, b) => a.columnIndex - b.columnIndex);
-        copy = copy.sort((a, b) => a.rowIndex - b.rowIndex);
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.columnIndex - b.columnIndex,
+        );
+        copiedBlockList = copiedBlockList.sort(
+          (a, b) => a.rowIndex - b.rowIndex,
+        );
 
         // block 이 존재하는 row에 대해서만 실행
         rowList.forEach((row) => {
           let settingCol: number = 0;
 
-          copy.forEach((obj, i) => {
+          copiedBlockList.forEach((obj, i) => {
             // 모든 block 순회
 
             if (obj.rowIndex === row && !obj.toZero) {
@@ -215,11 +230,11 @@ const Board = ({
 
               if (obj.columnIndex - settingCol !== 0) {
                 // 움직이는 block이 존재할 때
-                isMoved1 = true;
+                isMoved = true;
               }
               obj.columnIndex = settingCol;
               settingCol += 1;
-              const next = copy[i + 1];
+              const next = copiedBlockList[i + 1];
               if (next !== undefined) {
                 if (
                   next.rowIndex === row &&
@@ -232,7 +247,7 @@ const Board = ({
                   next.columnIndex = obj.columnIndex;
                   next.toZero = true;
                   obj.merged = true;
-                  isMoved2 = true;
+                  isMoved = true;
                 }
               }
             }
@@ -240,8 +255,8 @@ const Board = ({
         });
       }
 
-      copy.forEach((obj) => {
-        maxV = Math.max(maxV, obj.value - 1);
+      copiedBlockList.forEach((obj) => {
+        maxValue = Math.max(maxValue, obj.value - 1);
         if (obj.value === 7) {
           setClear(true);
         }
@@ -254,26 +269,26 @@ const Board = ({
       });
       unused = unused.filter(
         (dat) =>
-          !copy.some(
+          !copiedBlockList.some(
             (block) =>
               block.rowIndex === dat.rowIndex &&
               block.columnIndex === dat.columnIndex,
           ),
       );
-      if (isMoved1 || isMoved2) {
+      if (isMoved || isMoved) {
         const randomNum = Math.floor(Math.random() * unused.length);
         unused.forEach((block, i) => {
           if (i === randomNum) {
-            copy.push({
+            copiedBlockList.push({
               rowIndex: block.rowIndex,
               columnIndex: block.columnIndex,
-              value: Math.min(Math.floor(Math.random() * 3 + 1), maxV),
+              value: Math.min(Math.floor(Math.random() * 3 + 1), maxValue),
               merged: false,
               ID: blockID.current,
               toZero: false,
             });
             blockID.current += 1;
-            setBlockList(copy);
+            setBlockList(copiedBlockList);
             if (score !== 0) {
               setScore(score + add);
               setHighScore(Math.max(highScore, score + add));
@@ -338,9 +353,9 @@ const Board = ({
                 }
 
                 let colorString = '';
-                color.forEach((cl, i) => {
+                color.forEach((selectedColor, i) => {
                   if (i === obj.value) {
-                    colorString = cl;
+                    colorString = selectedColor;
                   }
                 });
 
